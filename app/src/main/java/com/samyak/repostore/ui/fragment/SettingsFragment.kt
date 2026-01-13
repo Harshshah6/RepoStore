@@ -1,6 +1,7 @@
 package com.samyak.repostore.ui.fragment
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -13,7 +14,9 @@ import com.samyak.repostore.data.auth.GitHubAuth
 import com.samyak.repostore.databinding.FragmentSettingsBinding
 import com.samyak.repostore.ui.activity.AboutActivity
 import com.samyak.repostore.ui.activity.AppDeveloperActivity
+import com.samyak.repostore.ui.activity.DonateActivity
 import com.samyak.repostore.ui.activity.GitHubSignInActivity
+import com.samyak.repostore.ui.activity.LicensesActivity
 
 class SettingsFragment : Fragment() {
 
@@ -34,6 +37,9 @@ class SettingsFragment : Fragment() {
         setupAccountSection()
         setupAboutSection()
         setupDeveloperSection()
+        setupDonateSection()
+        setupLicensesSection()
+        setupSourceCodeSection()
     }
 
     override fun onResume() {
@@ -88,12 +94,38 @@ class SettingsFragment : Fragment() {
         }
     }
 
+    private fun setupDonateSection() {
+        binding.donateCard.setOnClickListener {
+            startActivity(Intent(requireContext(), DonateActivity::class.java))
+        }
+    }
+
+    private fun setupLicensesSection() {
+        binding.licensesCard.setOnClickListener {
+            startActivity(Intent(requireContext(), LicensesActivity::class.java))
+        }
+    }
+
+    private fun setupSourceCodeSection() {
+        binding.sourceCodeCard.setOnClickListener {
+            try {
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(SOURCE_CODE_URL))
+                startActivity(intent)
+            } catch (e: Exception) {
+                // Handle error silently
+            }
+        }
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
     }
 
     companion object {
+        // TODO: Replace with your actual GitHub repository URL
+        private const val SOURCE_CODE_URL = "https://github.com/samyak2403/RepoStore"
+
         fun newInstance() = SettingsFragment()
     }
 }
