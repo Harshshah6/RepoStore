@@ -1,170 +1,215 @@
 <div align="center">
-
-# 🏪 RepoStore
-
-### A Modern GitHub-Powered Android App Store
-
-[![Android](https://img.shields.io/badge/Android-8.0%2B-green.svg?style=flat&logo=android)](https://developer.android.com)
-[![Kotlin](https://img.shields.io/badge/Kotlin-1.9-blue.svg?style=flat&logo=kotlin)](https://kotlinlang.org)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![GitHub release](https://img.shields.io/github/v/release/samyak2403/RepoStore?include_prereleases)](https://github.com/samyak2403/RepoStore/releases)
-
-<img src="app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.webp" width="120" alt="RepoStore Logo"/>
-
-**Discover, Download & Install Android Apps from GitHub**
-
-[<img src="https://img.shields.io/badge/Download-APK-brightgreen?style=for-the-badge&logo=android" />](https://github.com/samyak2403/RepoStore/releases/latest)
-
+  <img src="app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.webp" width="200" alt="Project logo"/>
 </div>
 
----
+<h1 align="center">RepoStore</h1>
 
-## � SRcreenshots
+<p align="center">
+  <a href="https://opensource.org/licenses/MIT"><img alt="License" src="https://img.shields.io/badge/License-MIT-blue.svg"/></a>
+  <a href="https://kotlinlang.org"><img alt="Kotlin" src="https://img.shields.io/badge/Kotlin-1.9-7F52FF.svg?logo=kotlin&logoColor=white"/></a>
+  <a href="#"><img alt="Platform" src="https://img.shields.io/badge/Platform-Android-brightgreen?logo=android"/></a>
+  <a href="https://github.com/samyak2403/RepoStore/releases"><img alt="Release" src="https://img.shields.io/github/v/release/samyak2403/RepoStore?label=Release&logo=github"/></a>
+  <a href="https://github.com/samyak2403/RepoStore/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/samyak2403/RepoStore?style=social"/></a>
+  <img alt="Material 3" src="https://img.shields.io/badge/Material-3-4285F4?logo=material-design&logoColor=white"/>
+  <img alt="MVVM" src="https://img.shields.io/badge/Architecture-MVVM-orange"/>
+</p>
 
-<div align="center">
-<table>
-  <tr>
-    <td><img src="screenshots/home.png" width="200"/></td>
-    <td><img src="screenshots/details.png" width="200"/></td>
-    <td><img src="screenshots/search.png" width="200"/></td>
-    <td><img src="screenshots/settings.png" width="200"/></td>
-  </tr>
-  <tr>
-    <td align="center"><b>Home</b></td>
-    <td align="center"><b>App Details</b></td>
-    <td align="center"><b>Search</b></td>
-    <td align="center"><b>Settings</b></td>
-  </tr>
-</table>
-</div>
+<p align="center">
+  RepoStore is a GitHub-powered Android app store that discovers repositories shipping real installable APKs and lets you install, track, and update them from one place.
+</p>
 
----
-
-## ✨ Features
-
-<table>
-<tr>
-<td>
-
-### 🔍 Discover Apps
-- Browse trending Android apps from GitHub
-- Search repositories with powerful filters
-- Category-based app discovery
-- Featured apps carousel
-
-</td>
-<td>
-
-### 📥 Easy Installation
-- Direct APK download from releases
-- Real-time download progress
-- Auto-detect installed apps
-- One-tap install/open
-
-</td>
-</tr>
-<tr>
-<td>
-
-### � Richr Details
-- Full README with Markdown support
-- Screenshot gallery with zoom
-- Release notes & changelogs
-- Developer profiles
-
-</td>
-<td>
-
-### 🔐 GitHub Integration
-- OAuth sign-in support
-- Increased API rate limits
-- View developer repositories
-- Star count & fork info
-
-</td>
-</tr>
-</table>
-
-### Additional Features
-
-- 🌙 **Dark Mode** - Beautiful dark theme support
-- 💳 **UPI Donations** - Support developers directly
-- 📜 **Open Source Licenses** - View all library credits
-- 🔄 **Pull to Refresh** - Always get latest data
+<p align="center">
+  <img src="screenshots/banner.png" />
+</p>
 
 ---
 
-## 🏗️ Architecture
+### All screenshots can be found in [screenshots/](screenshots/) folder.
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                        UI Layer                         │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐     │
-│  │  Activities │  │  Fragments  │  │  Adapters   │     │
-│  └──────┬──────┘  └──────┬──────┘  └─────────────┘     │
-│         │                │                              │
-│         └────────┬───────┘                              │
-│                  ▼                                      │
-│         ┌─────────────────┐                             │
-│         │   ViewModels    │                             │
-│         └────────┬────────┘                             │
-└──────────────────┼──────────────────────────────────────┘
-                   │
-┌──────────────────┼──────────────────────────────────────┐
-│                  ▼           Data Layer                 │
-│         ┌─────────────────┐                             │
-│         │   Repository    │                             │
-│         └────────┬────────┘                             │
-│                  │                                      │
-│    ┌─────────────┼─────────────┐                        │
-│    ▼             ▼             ▼                        │
-│ ┌──────┐   ┌──────────┐   ┌────────┐                   │
-│ │ Room │   │ Retrofit │   │  Auth  │                   │
-│ │  DB  │   │   API    │   │ GitHub │                   │
-│ └──────┘   └──────────┘   └────────┘                   │
-└─────────────────────────────────────────────────────────┘
-```
+<img src="screenshots/preview.gif" align="right" width="320"/>
 
+## ✨ What is RepoStore?
 
+RepoStore is a native Android app that turns GitHub releases into a clean, Play Store style experience:
 
-## 📦 Installation
-
-### Download APK
-
-[<img src="https://img.shields.io/badge/Download%20Latest-APK-success?style=for-the-badge" />](https://github.com/samyak2403/RepoStore/releases/latest)
-
-### Build from Source
-
-```bash
-# Clone the repository
-git clone https://github.com/samyak2403/RepoStore.git
-
-# Navigate to project directory
-cd RepoStore
-
-# Build debug APK
-./gradlew assembleDebug
-
-# Or build release APK
-./gradlew assembleRelease
-```
+- Only shows repositories that actually provide installable APK assets.
+- Detects installed apps and shows update availability.
+- Always installs from the latest published release with changelog.
+- Presents a polished details screen with stats, README, and developer info.
 
 ---
 
-## ⚙️ Configuration
+## 🔃 Download
+
+<a href="https://github.com/samyak2403/RepoStore/releases">
+  <img src="https://img.shields.io/badge/Download-APK-success?style=for-the-badge&logo=android" height="60"/>
+</a>
+
+---
+
+## 🚀 Features
+
+- **Smart Discovery**
+  - Home sections for "Trending", "Recently Updated", and "Featured" projects.
+  - Only repos with valid APK assets are shown.
+  - Category-based filtering for apps.
+
+- **Latest-Release Installs**
+  - Fetches `/releases/latest` for each repo.
+  - Shows only assets from the latest release.
+  - Single "Install" action with download progress.
+
+- **Rich Details Screen**
+  - App name, version, "Install" button.
+  - Stars, forks, language stats.
+  - Rendered README content ("About this app").
+  - Latest release notes with markdown formatting.
+  - Screenshot gallery with fullscreen viewer.
+
+- **Install & Update Tracking**
+  - Opens APK downloads with the package installer.
+  - Tracks installations and shows "Open" for installed apps.
+  - Detects when updates are available.
+
+- **Appearance & Theming**
+  - Material 3 design with Material You support.
+  - Dark mode with system theme support.
+  - Clean, Play Store inspired UI.
+
+- **GitHub Integration**
+  - Optional GitHub sign-in via OAuth device flow.
+  - Increases API rate limit from 60 to 5,000 requests/hour.
+  - View developer profiles and repositories.
+
+- **Support Developer**
+  - UPI payment integration with QR code.
+  - Detects installed UPI apps (GPay, PhonePe, Paytm, etc.).
+  - One-tap payment support.
+
+---
+
+## � How doens an app appear in RepoStore?
+
+RepoStore does not use any private indexing or manual curation. Your project can appear automatically if it follows these conditions:
+
+1. **Public repository on GitHub**
+   - Visibility must be `public`.
+
+2. **At least one published release**
+   - Created via GitHub Releases (not only tags).
+   - The latest release must not be a draft or prerelease.
+
+3. **APK assets in the latest release**
+   - The latest release must contain at least one `.apk` file.
+   - GitHub's auto-generated source artifacts are ignored.
+
+4. **Discoverable by search / topics**
+   - Repositories are fetched via the public GitHub Search API.
+   - Topics like `android`, `mobile`, `apk` help ranking.
+   - Having stars makes it more likely to appear in sections.
+
+If your repo meets these conditions, RepoStore can find it through search and show it automatically—no manual submission required.
+
+---
+
+## 🧭 How RepoStore Works
+
+1. **Search**
+   - Uses GitHub's `/search/repositories` endpoint with Android-focused queries.
+   - Applies scoring based on topics, language, and description.
+   - Filters out archived repos.
+
+2. **Release + Asset Check**
+   - For candidate repos, calls `/repos/{owner}/{repo}/releases/latest`.
+   - Checks the `assets` array for `.apk` files.
+   - If no APK is found, the repo is excluded from results.
+
+3. **Details Screen**
+   - Repository info: name, owner, description, stars, forks.
+   - Latest release: tag, published date, changelog, assets.
+   - README: loaded and rendered as "About this app".
+   - Screenshots: detected from repository contents.
+
+4. **Install Flow**
+   - When user taps "Install":
+     - Downloads the APK with progress indicator.
+     - Delegates to the system package installer.
+     - Records installation in local database.
+     - Shows "Open" button for installed apps.
+
+---
+
+## ⚙️ Tech Stack
+
+- **Minimum Android SDK: 26 (Android 8.0)**
+
+- **Language & Platform**
+  - [Kotlin](https://kotlinlang.org/) with Coroutines & Flow
+  - Android Native with ViewBinding
+
+- **Architecture**
+  - MVVM (Model-View-ViewModel)
+  - Repository Pattern
+  - Single Activity with Fragments
+
+- **Networking & Data**
+  - [Retrofit](https://square.github.io/retrofit/) + OkHttp
+  - [Gson](https://github.com/google/gson) for JSON parsing
+  - [Room](https://developer.android.com/jetpack/androidx/releases/room) for local database
+
+- **UI & Design**
+  - [Material 3](https://m3.material.io/) Components
+  - [Glide](https://github.com/bumptech/glide) for image loading
+  - [Markwon](https://github.com/noties/Markwon) for README rendering
+  - [PhotoView](https://github.com/GetStream/photoview-android) for zoomable images
+
+- **Auth & Security**
+  - GitHub OAuth (Device Code flow)
+  - SharedPreferences for token storage
+
+---
+
+## ✅ Why Use RepoStore?
+
+- **No more hunting through GitHub releases**
+  See only repos that actually ship APKs.
+
+- **Knows what you installed**
+  Tracks apps installed via RepoStore and shows when updates are available.
+
+- **Always the latest release**
+  Installs are guaranteed to come from the latest published release.
+
+- **Play Store-like experience**
+  Familiar UI with categories, search, and app details.
+
+- **Open source & extensible**
+  Written in Kotlin with clean architecture—easy to fork and extend.
+
+---
+
+## 💖 Support This Project
+
+RepoStore is free and always will be. If it's helped you, consider:
+
+- ⭐ **Star** this repository
+- 🐛 **Report** bugs and issues
+- 💡 **Suggest** new features
+- 💳 **Donate** via UPI (in-app)
+
+Your support helps maintain the app and build new features!
+
+---
+
+## 🔑 Configuration
 
 ### GitHub OAuth (Optional)
 
-To enable GitHub sign-in for increased API limits (60 → 5,000 requests/hour):
+To enable GitHub sign-in for increased API limits:
 
-1. Go to **[GitHub Developer Settings](https://github.com/settings/developers)**
-2. Click **"New OAuth App"**
-3. Fill in:
-   - **Application name:** `RepoStore`
-   - **Homepage URL:** `https://github.com`
-   - **Callback URL:** `https://github.com`
-4. Copy the **Client ID**
-5. Update in `GitHubAuth.kt`:
+1. Create a GitHub OAuth app at **GitHub → Settings → Developer settings → OAuth Apps**.
+2. Copy the **Client ID** from the OAuth app.
+3. Update in `GitHubAuth.kt`:
 
 ```kotlin
 private const val CLIENT_ID = "your_client_id_here"
@@ -172,49 +217,13 @@ private const val CLIENT_ID = "your_client_id_here"
 
 ---
 
-## 🤝 Contributing
+## ⚠️ Disclaimer
 
-Contributions are welcome! Here's how you can help:
+RepoStore only helps you discover and download release assets that are already published on GitHub by third-party developers.
 
-1. 🍴 **Fork** the repository
-2. 🌿 Create a **branch** (`git checkout -b feature/amazing-feature`)
-3. 💾 **Commit** changes (`git commit -m 'Add amazing feature'`)
-4. 📤 **Push** to branch (`git push origin feature/amazing-feature`)
-5. 🔃 Open a **Pull Request**
+The contents, safety, and behavior of those downloads are entirely the responsibility of their respective authors and distributors, not this project.
 
----
-
-## 📜 License
-
-```
-MIT License
-
-Copyright (c) 2024 Samyak Kamble
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-```
-
----
-
-## 📚 Libraries Used
-
-| Library | Purpose |
-|:--------|:--------|
-| [Retrofit](https://github.com/square/retrofit) | HTTP Client |
-| [OkHttp](https://github.com/square/okhttp) | Networking |
-| [Glide](https://github.com/bumptech/glide) | Image Loading |
-| [Room](https://developer.android.com/training/data-storage/room) | Local Database |
-| [Markwon](https://github.com/noties/Markwon) | Markdown Rendering |
-| [PhotoView](https://github.com/GetStream/photoview-android) | Zoomable Images |
-| [Material Components](https://github.com/material-components/material-components-android) | UI Components |
+By using RepoStore, you understand and agree that you install and run any downloaded software at your own risk. This project does not review, validate, or guarantee that any APK is safe, free of malware, or fit for any particular purpose.
 
 ---
 
@@ -230,14 +239,33 @@ copies or substantial portions of the Software.
 
 ---
 
-## 💖 Support
+## 📄 License
 
-If you find this project helpful:
+RepoStore is released under the **MIT License**.
 
-- ⭐ **Star** this repository
-- 🐛 **Report** bugs and issues
-- 💡 **Suggest** new features
-- 💳 **Donate** via UPI (in-app)
+```
+MIT License
+
+Copyright (c) 2024 Samyak Kamble
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
 
 ---
 
