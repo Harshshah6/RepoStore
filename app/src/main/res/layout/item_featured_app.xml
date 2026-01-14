@@ -13,12 +13,28 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <!-- Background gradient -->
+        <!-- Background gradient (fallback) -->
         <View
             android:id="@+id/gradient_bg"
             android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <!-- Banner image from screenshots -->
+        <ImageView
+            android:id="@+id/iv_banner"
+            android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@drawable/bg_featured_gradient" />
+            android:scaleType="centerCrop"
+            android:visibility="gone"
+            android:contentDescription="@string/banner"
+            tools:visibility="visible" />
+
+        <!-- Dark overlay for text readability -->
+        <View
+            android:id="@+id/overlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/bg_featured_overlay" />
 
         <com.google.android.material.chip.Chip
             android:id="@+id/chip_tag"

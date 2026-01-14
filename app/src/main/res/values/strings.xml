@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">GitHub App Store</string>
+    <string name="app_name">Repo Store</string>
 
     <!-- Navigation -->
     <string name="home">Home</string>
@@ -23,7 +23,15 @@
     <string name="recently_updated">Recently updated</string>
     <string name="see_more">See more</string>
 
+    <!-- Game Sections -->
+    <string name="featured_games">Featured Games</string>
+    <string name="popular_games">Popular Games</string>
+    <string name="new_games">New Games</string>
+    <string name="no_games_found">No games found</string>
+
     <!-- App Details -->
+    <string name="app_icon">App icon</string>
+    <string name="banner">Banner</string>
     <string name="about">About</string>
     <string name="about_this_app">About this app</string>
     <string name="screenshots">Screenshots</string>

@@ -250,6 +250,17 @@ class DetailActivity : AppCompatActivity() {
                 .placeholder(R.drawable.ic_app_placeholder)
                 .into(ivAppIcon)
 
+            // Icon click - open icon viewer
+            ivAppIcon.setOnClickListener {
+                val intent = IconViewerActivity.newIntent(
+                    this@DetailActivity,
+                    repo.owner.avatarUrl,
+                    repo.name
+                )
+                startActivity(intent)
+                overridePendingTransition(R.anim.slide_up, R.anim.fade_out)
+            }
+
             // Topics as chips
             if (!repo.topics.isNullOrEmpty()) {
                 chipGroupTopics.removeAllViews()
