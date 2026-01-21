@@ -4,6 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.samyak.repostore.data.model.AppItem
+import com.samyak.repostore.data.model.SearchFilters
+import com.samyak.repostore.data.model.SortOption
+import com.samyak.repostore.data.model.UpdatedWithin
 import com.samyak.repostore.data.repository.GitHubRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -20,29 +23,101 @@ class SearchViewModel(private val repository: GitHubRepository) : ViewModel() {
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+    
+    private val _filters = MutableStateFlow(SearchFilters.DEFAULT)
+    val filters: StateFlow<SearchFilters> = _filters.asStateFlow()
+    
+    private val _suggestions = MutableStateFlow<List<String>>(emptyList())
+    val suggestions: StateFlow<List<String>> = _suggestions.asStateFlow()
+    
+    private val _showFilters = MutableStateFlow(false)
+    val showFilters: StateFlow<Boolean> = _showFilters.asStateFlow()
+    
+    private val _totalResults = MutableStateFlow(0)
+    val totalResults: StateFlow<Int> = _totalResults.asStateFlow()
 
     private var searchJob: Job? = null
+    private var suggestionJob: Job? = null
+    private var currentPage = 1
+    private var hasNextPage = false
+    private var isLoadingMore = false
 
     fun search(query: String) {
         _searchQuery.value = query
+        currentPage = 1
+        hasNextPage = false
 
         searchJob?.cancel()
 
         if (query.isBlank()) {
             _uiState.value = SearchUiState.Idle
+            _suggestions.value = emptyList()
             return
         }
 
         if (query.length < 2) {
-            return // Don't search for single characters
+            // Fetch suggestions as user types
+            fetchSuggestions(query)
+            return
         }
 
+        fetchSuggestions(query)
+        performSearch(query, _filters.value, page = 1)
+    }
+
+    /**
+     * Search with current query and updated filters
+     */
+    fun searchWithFilters(newFilters: SearchFilters) {
+        _filters.value = newFilters
+        currentPage = 1
+        
+        val query = _searchQuery.value
+        if (query.isNotBlank() && query.length >= 2) {
+            performSearch(query, newFilters, page = 1)
+        }
+    }
+
+    /**
+     * Load more results (pagination)
+     */
+    fun loadMore() {
+        if (isLoadingMore || !hasNextPage) return
+        
+        val query = _searchQuery.value
+        if (query.isBlank()) return
+        
+        isLoadingMore = true
+        currentPage++
+        
+        viewModelScope.launch {
+            val result = repository.advancedSearchApps(query, _filters.value, currentPage)
+            
+            result.fold(
+                onSuccess = { searchResult ->
+                    hasNextPage = searchResult.hasNextPage
+                    _totalResults.value = searchResult.totalCount
+                    
+                    val currentState = _uiState.value
+                    if (currentState is SearchUiState.Success) {
+                        val combined = currentState.apps + searchResult.items
+                        _uiState.value = SearchUiState.Success(combined.distinctBy { it.repo.id })
+                    }
+                },
+                onFailure = { /* Silently fail on load more */ }
+            )
+            
+            isLoadingMore = false
+        }
+    }
+
+    private fun performSearch(query: String, filters: SearchFilters, page: Int) {
         searchJob = viewModelScope.launch {
-            delay(600) // Debounce - increased to reduce API calls
+            delay(500) // Debounce
 
             _uiState.value = SearchUiState.Loading
 
-            // First try local cache
+            // First try local cache for instant results
             val cachedResults = repository.searchCachedRepos(query).first()
             if (cachedResults.isNotEmpty()) {
                 val appItems = cachedResults.map { repo ->
@@ -51,13 +126,15 @@ class SearchViewModel(private val repository: GitHubRepository) : ViewModel() {
                 _uiState.value = SearchUiState.Success(appItems)
             }
 
-            // Then fetch from API
-            val result = repository.searchApps(query)
+            // Then fetch from API with filters
+            val result = repository.advancedSearchApps(query, filters, page)
 
             result.fold(
-                onSuccess = { apps ->
-                    _uiState.value = if (apps.isEmpty()) {
-                        // If API returns empty but we had cached results, keep showing them
+                onSuccess = { searchResult ->
+                    hasNextPage = searchResult.hasNextPage
+                    _totalResults.value = searchResult.totalCount
+                    
+                    _uiState.value = if (searchResult.items.isEmpty()) {
                         if (cachedResults.isNotEmpty()) {
                             val appItems = cachedResults.map { repo ->
                                 AppItem(repo, null, null)
@@ -67,11 +144,10 @@ class SearchViewModel(private val repository: GitHubRepository) : ViewModel() {
                             SearchUiState.Empty
                         }
                     } else {
-                        SearchUiState.Success(apps)
+                        SearchUiState.Success(searchResult.items)
                     }
                 },
                 onFailure = { error ->
-                    // If we have cached results, show them instead of error
                     if (cachedResults.isNotEmpty()) {
                         val appItems = cachedResults.map { repo ->
                             AppItem(repo, null, null)
@@ -85,10 +161,72 @@ class SearchViewModel(private val repository: GitHubRepository) : ViewModel() {
         }
     }
 
+    private fun fetchSuggestions(query: String) {
+        suggestionJob?.cancel()
+        suggestionJob = viewModelScope.launch {
+            delay(200)
+            val suggestions = repository.getSearchSuggestions(query)
+            _suggestions.value = suggestions
+        }
+    }
+
+    // Filter operations
+    fun updateSortOption(sortOption: SortOption) {
+        val newFilters = _filters.value.copy(sortBy = sortOption)
+        searchWithFilters(newFilters)
+    }
+
+    fun updateLanguageFilter(language: String?) {
+        val newFilters = _filters.value.copy(language = language)
+        searchWithFilters(newFilters)
+    }
+
+    fun updateMinStars(minStars: Int?) {
+        val newFilters = _filters.value.copy(minStars = minStars)
+        searchWithFilters(newFilters)
+    }
+
+    fun updateUpdatedWithin(updatedWithin: UpdatedWithin?) {
+        val newFilters = _filters.value.copy(updatedWithin = updatedWithin)
+        searchWithFilters(newFilters)
+    }
+
+    fun toggleHasReleases(hasReleases: Boolean) {
+        val newFilters = _filters.value.copy(hasReleases = hasReleases)
+        searchWithFilters(newFilters)
+    }
+
+    fun toggleShowFilters() {
+        _showFilters.value = !_showFilters.value
+    }
+
+    fun resetFilters() {
+        _filters.value = SearchFilters.DEFAULT
+        val query = _searchQuery.value
+        if (query.isNotBlank() && query.length >= 2) {
+            performSearch(query, SearchFilters.DEFAULT, page = 1)
+        }
+    }
+
     fun clearSearch() {
         _searchQuery.value = ""
         _uiState.value = SearchUiState.Idle
+        _suggestions.value = emptyList()
+        _totalResults.value = 0
+        currentPage = 1
+        hasNextPage = false
         searchJob?.cancel()
+        suggestionJob?.cancel()
+    }
+    
+    fun hasActiveFilters(): Boolean {
+        val default = SearchFilters.DEFAULT
+        val current = _filters.value
+        return current.sortBy != default.sortBy ||
+               current.language != default.language ||
+               current.minStars != default.minStars ||
+               current.updatedWithin != default.updatedWithin ||
+               current.hasReleases != default.hasReleases
     }
 }
 

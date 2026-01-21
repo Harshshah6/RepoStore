@@ -96,10 +96,23 @@ class GitHubRepository(private val repoDao: RepoDao) {
         results.awaitAll().filterNotNull()
     }
 
+    /**
+     * Search result wrapper with metadata
+     */
+    data class SearchResult(
+        val items: List<AppItem>,
+        val totalCount: Int,
+        val hasNextPage: Boolean,
+        val query: String,
+        val filters: SearchFilters
+    )
+
     suspend fun searchApps(query: String, page: Int = 1): Result<List<AppItem>> = withContext(Dispatchers.IO) {
         try {
+            // Search in name, description, and readme
             val searchQuery = "$query in:name,description topic:android"
-            val response = api.searchRepositories(searchQuery, perPage = 30, page = page)
+//            val searchQuery = "$query in:name,description,readme"
+            val response = api.searchRepositories(searchQuery, perPage = 40, page = page)
 
             // Filter to only repos with APK releases
             val appItems = filterReposWithApk(response.items)
@@ -113,6 +126,76 @@ class GitHubRepository(private val repoDao: RepoDao) {
             handleHttpException(e)
         } catch (e: Exception) {
             Result.failure(e)
+        }
+    }
+
+    /**
+     * Advanced search with filters for language, stars, sort order, etc.
+     * @param query User's search term
+     * @param filters Advanced search filters
+     * @param page Page number for pagination
+     * @return List of matching apps with APK releases
+     */
+    suspend fun advancedSearchApps(
+        query: String, 
+        filters: SearchFilters = SearchFilters.DEFAULT,
+        page: Int = 1
+    ): Result<SearchResult> = withContext(Dispatchers.IO) {
+        try {
+            val searchQuery = filters.buildQuery(query)
+            
+            // Determine sort parameters based on filter
+            val sortBy = filters.sortBy.apiValue.ifEmpty { "stars" }
+            val order = "desc"
+            
+            val response = api.searchRepositories(
+                query = searchQuery,
+                sort = sortBy,
+                order = order,
+                perPage = 40,
+                page = page
+            )
+
+            // Filter to only repos with APK releases if required
+            val appItems = if (filters.hasReleases) {
+                filterReposWithApk(response.items)
+            } else {
+                response.items.map { repo ->
+                    val tag = determineTag(repo, null)
+                    AppItem(repo, null, tag)
+                }
+            }
+
+            if (appItems.isNotEmpty()) {
+                repoDao.insertRepos(response.items)
+            }
+            
+            Result.success(SearchResult(
+                items = appItems,
+                totalCount = response.totalCount,
+                hasNextPage = response.items.size >= 40,
+                query = query,
+                filters = filters
+            ))
+        } catch (e: HttpException) {
+            handleHttpException(e)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Get search suggestions based on partial query
+     * Uses cached repos for quick suggestions
+     */
+    suspend fun getSearchSuggestions(query: String): List<String> = withContext(Dispatchers.IO) {
+        if (query.length < 2) return@withContext emptyList()
+        
+        try {
+            val cachedRepos = repoDao.searchRepos(query).first()
+            cachedRepos.take(5).map { it.name }
+        } catch (e: Exception) {
+            emptyList()
         }
     }
 

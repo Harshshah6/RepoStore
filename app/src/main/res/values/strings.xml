@@ -16,6 +16,24 @@
     <string name="no_results">No results found</string>
     <string name="clear">Clear</string>
     <string name="voice_search">Voice search</string>
+    <string name="filter">Filter</string>
+    <string name="sort_by">Sort by</string>
+    <string name="updated">Updated</string>
+    <string name="has_apk">Has APK</string>
+    <string name="reset">Reset</string>
+    <string name="results_count">%d results</string>
+    <string name="any_language">Any language</string>
+    <string name="any_stars">Any stars</string>
+    <string name="min_stars_format">%d+ stars</string>
+    <string name="best_match">Best Match</string>
+    <string name="most_stars">Most Stars</string>
+    <string name="most_forks">Most Forks</string>
+    <string name="recently_updated_sort">Recently Updated</string>
+    <string name="any_time">Any time</string>
+    <string name="last_week">Last week</string>
+    <string name="last_month">Last month</string>
+    <string name="last_3_months">Last 3 months</string>
+    <string name="last_year">Last year</string>
 
     <!-- Home Sections -->
     <string name="recommended_for_you">Recommended for you</string>

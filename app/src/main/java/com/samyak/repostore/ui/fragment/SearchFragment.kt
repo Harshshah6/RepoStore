@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
+import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -12,10 +13,16 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.chip.Chip
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.samyak.repostore.ui.widget.ShimmerFrameLayout
 import com.samyak.repostore.R
 import com.samyak.repostore.RepoStoreApp
 import com.samyak.repostore.data.model.AppItem
+import com.samyak.repostore.data.model.SearchFilters
+import com.samyak.repostore.data.model.SortOption
+import com.samyak.repostore.data.model.UpdatedWithin
 import com.samyak.repostore.databinding.FragmentSearchBinding
 import com.samyak.repostore.ui.activity.DetailActivity
 import com.samyak.repostore.ui.activity.DeveloperActivity
@@ -57,6 +64,7 @@ class SearchFragment : Fragment() {
         
         setupSearchBar()
         setupRecyclerView()
+        setupFilterChips()
         observeViewModel()
 
         // Focus search field
@@ -89,6 +97,10 @@ class SearchFragment : Fragment() {
             binding.etSearch.text?.clear()
             viewModel.clearSearch()
         }
+
+        binding.btnFilter.setOnClickListener {
+            viewModel.toggleShowFilters()
+        }
     }
 
     private fun setupRecyclerView() {
@@ -105,14 +117,196 @@ class SearchFragment : Fragment() {
         binding.rvSearchResults.apply {
             adapter = appAdapter
             layoutManager = LinearLayoutManager(requireContext())
+            
+            // Pagination - load more when scrolling near the end
+            addOnScrollListener(object : RecyclerView.OnScrollListener() {
+                override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                    super.onScrolled(recyclerView, dx, dy)
+                    
+                    if (dy > 0) {
+                        val layoutManager = recyclerView.layoutManager as LinearLayoutManager
+                        val visibleItemCount = layoutManager.childCount
+                        val totalItemCount = layoutManager.itemCount
+                        val pastVisibleItems = layoutManager.findFirstVisibleItemPosition()
+
+                        if ((visibleItemCount + pastVisibleItems) >= totalItemCount - 5) {
+                            viewModel.loadMore()
+                        }
+                    }
+                }
+            })
         }
+    }
+
+    private fun setupFilterChips() {
+        // Sort chip
+        binding.chipSort.setOnClickListener {
+            showSortDialog()
+        }
+
+        // Language chip
+        binding.chipLanguage.setOnClickListener {
+            showLanguageDialog()
+        }
+
+        // Stars chip
+        binding.chipStars.setOnClickListener {
+            showStarsDialog()
+        }
+
+        // Updated chip
+        binding.chipUpdated.setOnClickListener {
+            showUpdatedDialog()
+        }
+
+        // Has APK chip
+        binding.chipHasApk.setOnCheckedChangeListener { _, isChecked ->
+            viewModel.toggleHasReleases(isChecked)
+        }
+
+        // Reset chip
+        binding.chipReset.setOnClickListener {
+            viewModel.resetFilters()
+            binding.chipHasApk.isChecked = true
+            updateChipStates(SearchFilters.DEFAULT)
+        }
+    }
+
+    private fun showSortDialog() {
+        val options = arrayOf(
+            getString(R.string.best_match),
+            getString(R.string.most_stars),
+            getString(R.string.most_forks),
+            getString(R.string.recently_updated_sort)
+        )
+        val sortOptions = arrayOf(
+            SortOption.BEST_MATCH,
+            SortOption.STARS,
+            SortOption.FORKS,
+            SortOption.UPDATED
+        )
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.sort_by)
+            .setItems(options) { _, which ->
+                viewModel.updateSortOption(sortOptions[which])
+                binding.chipSort.text = options[which]
+                binding.chipSort.isChecked = which != 0
+            }
+            .show()
+    }
+
+    private fun showLanguageDialog() {
+        val languages = listOf(getString(R.string.any_language)) + SearchFilters.POPULAR_LANGUAGES
+        val options = languages.toTypedArray()
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.language)
+            .setItems(options) { _, which ->
+                val selectedLanguage = if (which == 0) null else languages[which]
+                viewModel.updateLanguageFilter(selectedLanguage)
+                binding.chipLanguage.text = if (which == 0) getString(R.string.language) else languages[which]
+                binding.chipLanguage.isChecked = which != 0
+            }
+            .show()
+    }
+
+    private fun showStarsDialog() {
+        val starOptions = SearchFilters.MIN_STAR_OPTIONS
+        val options = starOptions.map { stars ->
+            if (stars == 0) getString(R.string.any_stars) else getString(R.string.min_stars_format, stars)
+        }.toTypedArray()
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.stars)
+            .setItems(options) { _, which ->
+                val selectedStars = if (which == 0) null else starOptions[which]
+                viewModel.updateMinStars(selectedStars)
+                binding.chipStars.text = options[which]
+                binding.chipStars.isChecked = which != 0
+            }
+            .show()
+    }
+
+    private fun showUpdatedDialog() {
+        val timeOptions = UpdatedWithin.values()
+        val options = arrayOf(
+            getString(R.string.any_time),
+            getString(R.string.last_week),
+            getString(R.string.last_month),
+            getString(R.string.last_3_months),
+            getString(R.string.last_year)
+        )
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.updated)
+            .setItems(options) { _, which ->
+                val selectedUpdated = if (which == 0) null else timeOptions[which]
+                viewModel.updateUpdatedWithin(selectedUpdated)
+                binding.chipUpdated.text = if (which == 0) getString(R.string.updated) else options[which]
+                binding.chipUpdated.isChecked = which != 0
+            }
+            .show()
+    }
+
+    private fun updateChipStates(filters: SearchFilters) {
+        binding.chipSort.isChecked = filters.sortBy != SortOption.BEST_MATCH
+        binding.chipSort.text = if (filters.sortBy != SortOption.BEST_MATCH) {
+            filters.sortBy.displayName
+        } else {
+            getString(R.string.sort_by)
+        }
+
+        binding.chipLanguage.isChecked = filters.language != null
+        binding.chipLanguage.text = filters.language ?: getString(R.string.language)
+
+        binding.chipStars.isChecked = filters.minStars != null && filters.minStars > 0
+        binding.chipStars.text = if (filters.minStars != null && filters.minStars > 0) {
+            getString(R.string.min_stars_format, filters.minStars)
+        } else {
+            getString(R.string.stars)
+        }
+
+        binding.chipUpdated.isChecked = filters.updatedWithin != null
+        binding.chipUpdated.text = if (filters.updatedWithin != null) {
+            filters.updatedWithin.displayName
+        } else {
+            getString(R.string.updated)
+        }
+
+        binding.chipReset.isVisible = viewModel.hasActiveFilters()
     }
 
     private fun observeViewModel() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState.collect { state ->
-                    handleUiState(state)
+                launch {
+                    viewModel.uiState.collect { state ->
+                        handleUiState(state)
+                    }
+                }
+                
+                launch {
+                    viewModel.showFilters.collect { show ->
+                        binding.filterChipsContainer.isVisible = show
+                    }
+                }
+                
+                launch {
+                    viewModel.totalResults.collect { count ->
+                        if (count > 0) {
+                            binding.tvResultsCount.text = getString(R.string.results_count, count)
+                            binding.tvResultsCount.isVisible = true
+                        } else {
+                            binding.tvResultsCount.isVisible = false
+                        }
+                    }
+                }
+                
+                launch {
+                    viewModel.filters.collect { filters ->
+                        updateChipStates(filters)
+                    }
                 }
             }
         }

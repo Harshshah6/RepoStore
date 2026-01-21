@@ -34,7 +34,7 @@ class AppListViewModel(
     private var isLoadingMore = false
 
     private val category: AppCategory? = categoryName?.let { 
-        AppCategory.entries.find { cat -> cat.name == it }
+        AppCategory.values().find { cat -> cat.name == it }
     }
 
     init {
@@ -42,7 +42,6 @@ class AppListViewModel(
     }
 
     private fun getQuery(): String {
-        // Use simple keywords that work well with GitHub search
         return when {
             category == AppCategory.GAMES -> "android game"
             category != null -> category.query
@@ -72,6 +71,7 @@ class AppListViewModel(
             }
 
             val query = getQuery()
+            // searchApps now filters for APK releases automatically
             val result = repository.searchApps(query, currentPage)
 
             result.fold(
