@@ -144,34 +144,49 @@ class GitHubRepository(private val repoDao: RepoDao) {
         try {
             val searchQuery = filters.buildQuery(query)
             
-            // Determine sort parameters based on filter
-            val sortBy = filters.sortBy.apiValue.ifEmpty { "stars" }
+            // For "Best Match", pass null to use GitHub's relevance-based sorting
+            // Otherwise, use the specified sort option
+            val sortBy = filters.sortBy.apiValue.ifEmpty { null }
             val order = "desc"
             
             val response = api.searchRepositories(
                 query = searchQuery,
-                sort = sortBy,
+                sort = sortBy ?: "stars", // Default to stars for Best Match (GitHub's default)
                 order = order,
                 perPage = 40,
                 page = page
             )
 
+            // Always cache the repos for future searches
+            if (response.items.isNotEmpty()) {
+                repoDao.insertRepos(response.items)
+            }
+
             // Filter to only repos with APK releases if required
             val appItems = if (filters.hasReleases) {
-                filterReposWithApk(response.items)
+                val filtered = filterReposWithApk(response.items)
+                // If APK filtering returns empty but we have results, 
+                // fall back to showing unfiltered results so user sees something
+                if (filtered.isEmpty() && response.items.isNotEmpty()) {
+                    response.items.map { repo ->
+                        val tag = determineTag(repo, null)
+                        AppItem(repo, null, tag)
+                    }
+                } else {
+                    filtered
+                }
             } else {
                 response.items.map { repo ->
                     val tag = determineTag(repo, null)
                     AppItem(repo, null, tag)
                 }
             }
-
-            if (appItems.isNotEmpty()) {
-                repoDao.insertRepos(response.items)
-            }
+            
+            // Apply Play Store-like relevance scoring and sort
+            val rankedItems = rankByRelevance(appItems, query)
             
             Result.success(SearchResult(
-                items = appItems,
+                items = rankedItems,
                 totalCount = response.totalCount,
                 hasNextPage = response.items.size >= 40,
                 query = query,
@@ -181,6 +196,76 @@ class GitHubRepository(private val repoDao: RepoDao) {
             handleHttpException(e)
         } catch (e: Exception) {
             Result.failure(e)
+        }
+    }
+    
+    /**
+     * Rank search results by relevance score (Play Store-like algorithm)
+     * Scoring factors:
+     * - Exact name match: +100 points
+     * - Name starts with query: +50 points
+     * - Name contains query: +25 points
+     * - Description contains query: +10 points
+     * - Star count bonus: log10(stars) * 5 points
+     * - Android topic bonus: +15 points
+     * - Has releases (APK): +20 points
+     */
+    private fun rankByRelevance(items: List<AppItem>, query: String): List<AppItem> {
+        if (query.isBlank()) return items
+        
+        val queryLower = query.lowercase().trim()
+        val queryWords = queryLower.split(" ").filter { it.isNotBlank() }
+        
+        return items.sortedByDescending { item ->
+            var score = 0.0
+            val repo = item.repo
+            val nameLower = repo.name.lowercase()
+            val descLower = repo.description?.lowercase() ?: ""
+            
+            // Exact name match (highest priority)
+            if (nameLower == queryLower) {
+                score += 100
+            }
+            // Name starts with query
+            else if (nameLower.startsWith(queryLower)) {
+                score += 50
+            }
+            // Name contains query as whole word
+            else if (nameLower.contains(queryLower)) {
+                score += 25
+            }
+            // Name contains all query words
+            else if (queryWords.all { word -> nameLower.contains(word) }) {
+                score += 20
+            }
+            
+            // Description contains query
+            if (descLower.contains(queryLower)) {
+                score += 10
+            }
+            // Description contains all query words
+            else if (queryWords.all { word -> descLower.contains(word) }) {
+                score += 5
+            }
+            
+            // Star count bonus (logarithmic to prevent mega-repos from dominating)
+            if (repo.stars > 0) {
+                score += kotlin.math.log10(repo.stars.toDouble()) * 5
+            }
+            
+            // Android topic bonus
+            repo.topics?.let { topics ->
+                if (topics.any { it.lowercase().contains("android") }) {
+                    score += 15
+                }
+            }
+            
+            // Has releases (APK) bonus
+            if (item.latestRelease != null) {
+                score += 20
+            }
+            
+            score
         }
     }
 

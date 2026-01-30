@@ -7,7 +7,7 @@ data class SearchFilters(
     val sortBy: SortOption = SortOption.BEST_MATCH,
     val language: String? = null,
     val minStars: Int? = null,
-    val hasReleases: Boolean = true, // Default: Only show repos with APKs
+    val hasReleases: Boolean = false, // Default: Show all repos (APK filter is opt-in)
     val includeArchived: Boolean = false,
     val updatedWithin: UpdatedWithin? = null,
     val topics: List<String> = emptyList(), // Empty by default - searches ALL repos
@@ -15,17 +15,17 @@ data class SearchFilters(
 ) {
     /**
      * Build the GitHub search query string from filters
+     * Optimized for Play Store-like relevance matching
      */
     fun buildQuery(userQuery: String): String {
         val queryParts = mutableListOf<String>()
         
-        // User's search term - search in name, description, and optionally readme
+        // User's search term - search in name and description
         if (userQuery.isNotBlank()) {
-            val searchIn = if (searchInReadme) "in:name,description,readme" else "in:name,description"
-            queryParts.add("$userQuery $searchIn")
+            queryParts.add("$userQuery in:name,description")
         }
         
-        // Topics (optional - only if specified)
+        // Add topic filters only if user specified them
         if (topics.isNotEmpty()) {
             topics.forEach { topic ->
                 queryParts.add("topic:$topic")
@@ -39,7 +39,7 @@ data class SearchFilters(
             }
         }
         
-        // Minimum stars
+        // Minimum stars - helps filter quality repos
         minStars?.let { stars ->
             if (stars > 0) {
                 queryParts.add("stars:>=$stars")

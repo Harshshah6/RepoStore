@@ -87,21 +87,34 @@ class SearchViewModel(private val repository: GitHubRepository) : ViewModel() {
         val query = _searchQuery.value
         if (query.isBlank()) return
         
+        val currentQuery = query // Capture current query to detect changes
+        val currentFilters = _filters.value
+        
         isLoadingMore = true
         currentPage++
         
         viewModelScope.launch {
-            val result = repository.advancedSearchApps(query, _filters.value, currentPage)
+            // Verify query hasn't changed during async operation
+            if (_searchQuery.value != currentQuery) {
+                isLoadingMore = false
+                currentPage-- // Revert page increment
+                return@launch
+            }
+            
+            val result = repository.advancedSearchApps(currentQuery, currentFilters, currentPage)
             
             result.fold(
                 onSuccess = { searchResult ->
-                    hasNextPage = searchResult.hasNextPage
-                    _totalResults.value = searchResult.totalCount
-                    
-                    val currentState = _uiState.value
-                    if (currentState is SearchUiState.Success) {
-                        val combined = currentState.apps + searchResult.items
-                        _uiState.value = SearchUiState.Success(combined.distinctBy { it.repo.id })
+                    // Double-check query hasn't changed before updating UI
+                    if (_searchQuery.value == currentQuery) {
+                        hasNextPage = searchResult.hasNextPage
+                        _totalResults.value = searchResult.totalCount
+                        
+                        val currentState = _uiState.value
+                        if (currentState is SearchUiState.Success) {
+                            val combined = currentState.apps + searchResult.items
+                            _uiState.value = SearchUiState.Success(combined.distinctBy { it.repo.id })
+                        }
                     }
                 },
                 onFailure = { /* Silently fail on load more */ }

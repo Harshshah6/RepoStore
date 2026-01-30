@@ -229,7 +229,7 @@ class SearchFragment : Fragment() {
     }
 
     private fun showUpdatedDialog() {
-        val timeOptions = UpdatedWithin.values()
+        val timeOptions = UpdatedWithin.entries
         val options = arrayOf(
             getString(R.string.any_time),
             getString(R.string.last_week),
@@ -273,6 +273,8 @@ class SearchFragment : Fragment() {
         } else {
             getString(R.string.updated)
         }
+
+        binding.chipHasApk.isChecked = filters.hasReleases
 
         binding.chipReset.isVisible = viewModel.hasActiveFilters()
     }
