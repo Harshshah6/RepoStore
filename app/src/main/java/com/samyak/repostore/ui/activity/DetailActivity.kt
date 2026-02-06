@@ -32,6 +32,7 @@ import com.samyak.repostore.ui.viewmodel.DetailUiState
 import com.samyak.repostore.ui.viewmodel.DetailViewModel
 import com.samyak.repostore.ui.viewmodel.DetailViewModelFactory
 import com.samyak.repostore.util.AppInstaller
+import com.samyak.repostore.util.ApkArchitectureHelper
 import com.samyak.repostore.ui.widget.ShimmerFrameLayout
 import com.samyak.repostore.util.RateLimitDialog
 import io.noties.markwon.Markwon
@@ -379,10 +380,8 @@ class DetailActivity : AppCompatActivity() {
                 
                 tvReleaseDate.text = formatDate(release.publishedAt)
 
-                // Find APK asset (case-insensitive)
-                val apkAsset = release.assets.find {
-                    it.name.lowercase().endsWith(".apk")
-                }
+                // Find best APK for device architecture (arm64-v8a, armeabi-v7a, x86_64, x86)
+                val apkAsset = ApkArchitectureHelper.selectBestApk(release.assets)
 
                 if (apkAsset != null) {
                     currentApkAsset = apkAsset
