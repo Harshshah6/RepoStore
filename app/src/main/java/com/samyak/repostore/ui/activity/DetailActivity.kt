@@ -64,6 +64,7 @@ class DetailActivity : AppCompatActivity() {
     private var currentApkAsset: ReleaseAsset? = null
     private var installedPackageName: String? = null
     private var currentRepo: GitHubRepo? = null
+    private var currentGitHubVersion: String? = null  // Store GitHub release version for update detection
     
     // Shimmer layout for skeleton loading
     private var shimmerLayout: ShimmerFrameLayout? = null
@@ -386,6 +387,7 @@ class DetailActivity : AppCompatActivity() {
 
                 if (apkAsset != null) {
                     currentApkAsset = apkAsset
+                    currentGitHubVersion = release.tagName  // Store version for update detection
                     setupInstallButton(repo.name, repo.owner.login)
                 } else {
                     currentApkAsset = null
@@ -484,18 +486,80 @@ class DetailActivity : AppCompatActivity() {
         val isInstalled = installedPackageName?.let { appInstaller.isInstalled(it) } ?: false
 
         if (isInstalled && installedPackageName != null) {
-            binding.btnDownload.text = getString(R.string.open)
-            binding.btnDownload.setOnClickListener {
-                if (!appInstaller.launch(installedPackageName!!)) {
-                    Toast.makeText(this, R.string.cannot_open_app, Toast.LENGTH_SHORT).show()
+            // Get installed version and compare with GitHub version
+            val installedVersion = appInstaller.getInstalledVersion(installedPackageName!!)
+            val hasUpdate = isUpdateAvailable(installedVersion, currentGitHubVersion)
+            
+            if (hasUpdate) {
+                // Update available - show Update button
+                binding.btnDownload.text = getString(R.string.update)
+                binding.btnDownload.setOnClickListener {
+                    currentApkAsset?.let { startDownload(it) }
+                }
+            } else {
+                // Already up to date - show Open button
+                binding.btnDownload.text = getString(R.string.open)
+                binding.btnDownload.setOnClickListener {
+                    if (!appInstaller.launch(installedPackageName!!)) {
+                        Toast.makeText(this, R.string.cannot_open_app, Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
         } else {
+            // Not installed - show Install button
             binding.btnDownload.text = getString(R.string.install)
             binding.btnDownload.setOnClickListener {
                 currentApkAsset?.let { startDownload(it) }
             }
         }
+    }
+    
+    /**
+     * Compare installed version with GitHub version to detect updates.
+     * Returns true if GitHub version is newer than installed version.
+     */
+    private fun isUpdateAvailable(installedVersion: String?, githubVersion: String?): Boolean {
+        if (installedVersion == null || githubVersion == null) return false
+        
+        // Normalize versions by removing leading 'v' and common prefixes
+        val normalizedInstalled = normalizeVersion(installedVersion)
+        val normalizedGithub = normalizeVersion(githubVersion)
+        
+        // Compare versions numerically
+        return compareVersions(normalizedInstalled, normalizedGithub) < 0
+    }
+    
+    /**
+     * Normalize version string by removing common prefixes like 'v', 'V', 'version', etc.
+     */
+    private fun normalizeVersion(version: String): String {
+        return version
+            .trim()
+            .lowercase()
+            .removePrefix("v")
+            .removePrefix("version")
+            .removePrefix("-")
+            .removePrefix("_")
+            .trim()
+    }
+    
+    /**
+     * Compare two version strings numerically.
+     * Returns: negative if v1 < v2, zero if equal, positive if v1 > v2
+     */
+    private fun compareVersions(v1: String, v2: String): Int {
+        val parts1 = v1.split(Regex("[.\\-_]")).mapNotNull { it.filter { c -> c.isDigit() }.toIntOrNull() }
+        val parts2 = v2.split(Regex("[.\\-_]")).mapNotNull { it.filter { c -> c.isDigit() }.toIntOrNull() }
+        
+        val maxLength = maxOf(parts1.size, parts2.size)
+        
+        for (i in 0 until maxLength) {
+            val p1 = parts1.getOrElse(i) { 0 }
+            val p2 = parts2.getOrElse(i) { 0 }
+            if (p1 != p2) return p1 - p2
+        }
+        
+        return 0
     }
 
     companion object {
