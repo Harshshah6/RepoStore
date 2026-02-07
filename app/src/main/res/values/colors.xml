@@ -25,4 +25,8 @@
     
     <!-- Favorite color -->
     <color name="favorite_active">#E91E63</color>
+    <!-- Theme colors -->
+    <color name="md_theme_primary">#006C4C</color>
+    <color name="md_theme_primaryContainer">#89F8C6</color>
+    <color name="md_theme_surface">#FBFDFA</color>
 </resources>

@@ -201,6 +201,13 @@
     <string name="no_installed_apps">No installed apps</string>
     <string name="no_installed_apps_hint">Apps you install from your favorites will appear here</string>
     
+    <!-- Appearance -->
+    <string name="appearance">Appearance</string>
+    <string name="theme_system">System</string>
+    <string name="theme_for_you">For You</string>
+    <string name="theme_dark">Dark</string>
+    <string name="theme_light">Light</string>
+    
     <!-- Download Settings -->
     <string name="download_settings">Download Settings</string>
     <string name="proxy">Proxy</string>
