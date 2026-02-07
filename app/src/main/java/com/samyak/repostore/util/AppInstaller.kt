@@ -551,6 +551,25 @@ class AppInstaller private constructor(private val context: Context) {
     }
 
     /**
+     * Get the installed version of a package
+     * @param packageName The package name to check
+     * @return The version name string, or null if not installed
+     */
+    fun getInstalledVersion(packageName: String): String? {
+        return try {
+            val packageInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                context.packageManager.getPackageInfo(packageName, PackageManager.PackageInfoFlags.of(0))
+            } else {
+                @Suppress("DEPRECATION")
+                context.packageManager.getPackageInfo(packageName, 0)
+            }
+            packageInfo.versionName
+        } catch (e: PackageManager.NameNotFoundException) {
+            null
+        }
+    }
+
+    /**
      * Launch app by package name
      */
     fun launch(packageName: String): Boolean {
