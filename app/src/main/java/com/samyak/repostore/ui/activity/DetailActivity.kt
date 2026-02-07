@@ -35,6 +35,7 @@ import com.samyak.repostore.util.AppInstaller
 import com.samyak.repostore.util.ApkArchitectureHelper
 import com.samyak.repostore.ui.widget.ShimmerFrameLayout
 import com.samyak.repostore.util.RateLimitDialog
+import com.samyak.repostore.util.VersionComparator
 import io.noties.markwon.Markwon
 import io.noties.markwon.ext.strikethrough.StrikethroughPlugin
 import io.noties.markwon.ext.tables.TablePlugin
@@ -65,6 +66,7 @@ class DetailActivity : AppCompatActivity() {
     private var currentApkAsset: ReleaseAsset? = null
     private var installedPackageName: String? = null
     private var currentRepo: GitHubRepo? = null
+    private var currentReleaseTag: String? = null
     
     // Shimmer layout for skeleton loading
     private var shimmerLayout: ShimmerFrameLayout? = null
@@ -374,6 +376,9 @@ class DetailActivity : AppCompatActivity() {
                 tvVersion.text = release.tagName
                 tvReleaseName.text = release.name ?: release.tagName
                 
+                // Store release tag for version comparison
+                currentReleaseTag = release.tagName
+                
                 // Render release notes as markdown
                 val releaseNotes = release.body ?: getString(R.string.no_release_notes)
                 markwon.setMarkdown(tvReleaseNotes, releaseNotes)
@@ -483,13 +488,31 @@ class DetailActivity : AppCompatActivity() {
         val isInstalled = installedPackageName?.let { appInstaller.isInstalled(it) } ?: false
 
         if (isInstalled && installedPackageName != null) {
-            binding.btnDownload.text = getString(R.string.open)
-            binding.btnDownload.setOnClickListener {
-                if (!appInstaller.launch(installedPackageName!!)) {
-                    Toast.makeText(this, R.string.cannot_open_app, Toast.LENGTH_SHORT).show()
+            // Check if update is available
+            val installedVersion = appInstaller.getInstalledVersion(installedPackageName!!)
+            val hasUpdate = if (installedVersion != null && currentReleaseTag != null) {
+                VersionComparator.isNewerVersion(installedVersion, currentReleaseTag!!)
+            } else {
+                false
+            }
+            
+            if (hasUpdate) {
+                // Update available - show Update button
+                binding.btnDownload.text = getString(R.string.update)
+                binding.btnDownload.setOnClickListener {
+                    currentApkAsset?.let { startDownload(it) }
+                }
+            } else {
+                // Already up to date - show Open button
+                binding.btnDownload.text = getString(R.string.open)
+                binding.btnDownload.setOnClickListener {
+                    if (!appInstaller.launch(installedPackageName!!)) {
+                        Toast.makeText(this, R.string.cannot_open_app, Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
         } else {
+            // Not installed - show Install button
             binding.btnDownload.text = getString(R.string.install)
             binding.btnDownload.setOnClickListener {
                 currentApkAsset?.let { startDownload(it) }

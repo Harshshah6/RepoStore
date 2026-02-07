@@ -132,6 +132,7 @@
     <string name="retry">Retry</string>
     <string name="cancel">Cancel</string>
     <string name="update">Update</string>
+    <string name="update_available">Update available</string>
     <string name="uninstall">Uninstall</string>
     
     <!-- GitHub Sign In -->
